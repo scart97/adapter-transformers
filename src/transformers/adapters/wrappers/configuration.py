@@ -37,6 +37,7 @@ CONFIG_CLASS_KEYS_MAPPING = {
     },
     "vit": {},
     "xlm_roberta": {},
+    "wav2vec2": {"hidden_dropout_prob": "hidden_dropout", "attention_probs_dropout_prob": "attention_dropout"},
 }
 
 
