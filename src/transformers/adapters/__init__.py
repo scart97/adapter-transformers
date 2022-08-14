@@ -74,6 +74,7 @@ _import_structure = {
         "PredictionHead",
         "QuestionAnsweringHead",
         "Seq2SeqLMHead",
+        "SpeechRecognitionHead",
         "TaggingHead",
     ],
     "layer": ["AdapterLayer", "AdapterLayerBase"],
@@ -120,6 +121,7 @@ _import_structure = {
         "T5ModelWithHeads",
     ],
     "models.vit": ["ViTAdapterModel"],
+    "models.wav2vec2": ["Wav2Vec2AdapterModel"],
     "models.xlm_roberta": [
         "XLMRobertaAdapterModel",
         "XLMRobertaModelWithHeads",
@@ -188,6 +190,7 @@ if TYPE_CHECKING:
         PredictionHead,
         QuestionAnsweringHead,
         Seq2SeqLMHead,
+        SpeechRecognitionHead,
         TaggingHead,
     )
     from .layer import AdapterLayer, AdapterLayerBase
@@ -208,6 +211,7 @@ if TYPE_CHECKING:
     from .models.roberta import RobertaAdapterModel, RobertaModelWithHeads
     from .models.t5 import T5AdapterModel, T5ModelWithHeads
     from .models.vit import ViTAdapterModel
+    from .models.wav2vec2 import Wav2Vec2AdapterModel
     from .models.xlm_roberta import XLMRobertaAdapterModel, XLMRobertaModelWithHeads
     from .trainer import AdapterTrainer, Seq2SeqAdapterTrainer
     from .training import AdapterArguments, MultiLingAdapterArguments

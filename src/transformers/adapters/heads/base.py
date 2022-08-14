@@ -7,6 +7,7 @@ from torch import nn
 from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, MSELoss
 
 from ...modeling_outputs import (
+    CausalLMOutput,
     ImageClassifierOutput,
     MultipleChoiceModelOutput,
     QuestionAnsweringModelOutput,
@@ -472,6 +473,71 @@ class ImageClassificationHead(PredictionHead):
             if labels is not None:
                 outputs = (loss,) + outputs
             return outputs
+
+
+class SpeechRecognitionHead(PredictionHead):
+    def __init__(
+        self,
+        model,
+        head_name,
+        num_labels=2,
+        layers=1,
+        activation_function="tanh",
+        id2label=None,
+        pad_token_id=0,
+        ctc_loss_reduction="mean",
+        ctc_zero_infinity=True,
+    ):
+        super().__init__(head_name)
+        self.config = {
+            "head_type": "speech_recognition",
+            "num_labels": num_labels,
+            "layers": layers,
+            "activation_function": activation_function,
+            "label2id": {label: id_ for id_, label in id2label.items()} if id2label is not None else None,
+            "pad_token_id": pad_token_id,
+            "ctc_loss_reduction": ctc_loss_reduction,
+            "ctc_zero_infinity": ctc_zero_infinity,
+        }
+        self.build(model)
+
+    def forward(self, outputs, cls_output=None, attention_mask=None, return_dict=False, input_lengths=None, **kwargs):
+        logits = super().forward(outputs[0])
+        loss = None
+
+        labels = kwargs.pop("labels", None)
+
+        if labels is not None:
+            if labels.max() >= self.config["num_labels"]:
+                raise ValueError(f"Label values must be <= vocab_size: {self.config['num_labels']}")
+
+            # assuming that padded tokens are filled with -100
+            # when not being attended to
+            labels_mask = labels >= 0
+            target_lengths = labels_mask.sum(-1)
+            flattened_targets = labels.masked_select(labels_mask)
+
+            # ctc_loss doesn't support fp16
+            log_probs = nn.functional.log_softmax(logits, dim=-1, dtype=torch.float32).transpose(0, 1)
+
+            with torch.backends.cudnn.flags(enabled=False):
+                loss = nn.functional.ctc_loss(
+                    log_probs,
+                    flattened_targets,
+                    input_lengths,
+                    target_lengths,
+                    blank=self.config["pad_token_id"],
+                    reduction=self.config["ctc_loss_reduction"],
+                    zero_infinity=self.config["ctc_zero_infinity"],
+                )
+
+        if not return_dict:
+            output = (logits,) + outputs[2:]
+            return ((loss,) + output) if loss is not None else output
+
+        return CausalLMOutput(
+            loss=loss, logits=logits, hidden_states=outputs.hidden_states, attentions=outputs.attentions
+        )
 
 
 class ModelWithFlexibleHeadsAdaptersMixin(ModelWithHeadsAdaptersMixin):
