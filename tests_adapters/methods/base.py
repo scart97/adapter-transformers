@@ -206,9 +206,7 @@ class AdapterMethodBaseTestMixin:
 
         # evaluate
         trainer = AdapterTrainer(
-            model=model,
-            args=training_args,
-            train_dataset=train_dataset,
+            model=model, args=training_args, train_dataset=train_dataset, data_collator=self.data_collator()
         )
         trainer.train()
 
