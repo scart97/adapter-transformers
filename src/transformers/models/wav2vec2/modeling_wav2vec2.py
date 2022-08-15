@@ -447,6 +447,9 @@ class Wav2Vec2PositionalConvEmbedding(nn.Module):
         else:
             self.conv = nn.utils.weight_norm(self.conv, name="weight", dim=2)
 
+        # https://github.com/pytorch/pytorch/issues/28594#issuecomment-1149882811
+        self.conv.weight = self.conv.weight_v.detach()
+
         self.padding = Wav2Vec2SamePadLayer(config.num_conv_pos_embeddings)
         self.activation = ACT2FN[config.feat_extract_activation]
 
@@ -1284,6 +1287,9 @@ class Wav2Vec2Model(Wav2VecModelAdaptersMixin, Wav2Vec2PreTrainedModel):
         self._init_adapter_modules()
         # Initialize weights and apply final processing
         self.post_init()
+
+    def get_input_embeddings(self) -> nn.Module:
+        return None
 
     def freeze_feature_extractor(self):
         """
