@@ -71,7 +71,7 @@ class AdapterTestBase:
         )
         return GlueDataset(data_args, tokenizer=tokenizer, mode="train")
 
-    def data_collator():
+    def data_collator(self):
         return None
 
 
